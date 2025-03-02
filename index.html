@@ -3,15 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="twitter:app:name:iphone" content="Chrome">
+  <meta property="al:ios:url" content="https://paystack.com/pay/learngermanwithstephenie">
+  <meta property="al:android:url" content="https://paystack.com/pay/learngermanwithstephenie">
   <title>Redirecting...</title>
   <script>
-    // Check if the user is on TikTok's in-app browser
-    if (navigator.userAgent.includes("TikTok")) {
-      window.location.href = "https://paystack.com/pay/learngermanwithrachel";
+    const targetUrl = "https://paystack.com/pay/learngermanwithstephenie";
+    
+    function openInExternalBrowser() {
+      if (navigator.userAgent.toLowerCase().includes('tiktok')) {
+        // Try multiple approaches for TikTok
+        
+        // Method 1: Android Intent
+        document.head.innerHTML += `
+          <meta http-equiv="refresh" content="0;url=intent://${targetUrl.replace('https://', '')}#Intent;scheme=https;package=com.android.chrome;end">
+        `;
+        
+        // Method 2: Universal Links
+        window.location.href = `googlechrome://${targetUrl.replace('https://', '')}`;
+        
+        // Method 3: Direct with noreferrer
+        setTimeout(() => {
+          window.open(targetUrl, '_blank', 'noreferrer');
+        }, 100);
+        
+        // Method 4: Final fallback
+        setTimeout(() => {
+          const link = document.createElement('a');
+          link.href = targetUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.click();
+        }, 500);
+      } else {
+        window.location.href = targetUrl;
+      }
     }
+
+    // Run on page load and when visibility changes
+    document.addEventListener('visibilitychange', openInExternalBrowser);
+    window.onload = openInExternalBrowser;
   </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+    .container {
+      max-width: 600px;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2d3436;
+      margin-bottom: 1rem;
+    }
+    a {
+      color: #00b4d8;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
-<body>
-  <p>If you are not redirected automatically, <a href="https://paystack.com/pay/learngermanwithstephenie">click here</a>.</p>
+<body onclick="openInExternalBrowser()">
+  <div class="container">
+    <h1>Opening link in external browser...</h1>
+    <p>If you are not redirected automatically, <a href="https://paystack.com/pay/learngermanwithstephenie" target="_blank" rel="noopener noreferrer" onclick="openInExternalBrowser(); return false;">click here</a></p>
+    <p style="font-size: 0.9em; color: #666;">Tap anywhere on the screen if the page doesn't redirect automatically.</p>
+  </div>
 </body>
 </html>
