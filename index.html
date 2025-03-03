@@ -163,7 +163,7 @@
       <!-- Payment Button for New Users -->
       <div class="new-user-section">
         <p>New user? Click below to make payment:</p>
-        <button onclick="openInExternalBrowser('https://paystack.com/pay/learngermanwithstephenie')" class="button">
+        <button onclick="redirectToPaymentLink()" class="button">
           Make Payment (Ksh 200)
         </button>
       </div>
@@ -207,59 +207,61 @@
       return decrypted;
     }
 
-    function openInExternalBrowser(url) {
-      // Add meta tags for better external browser handling
-      const metaTags = `
-        <meta name="twitter:app:name:iphone" content="Chrome">
-        <meta property="al:ios:url" content="${url}">
-        <meta property="al:android:url" content="${url}">
-        <meta name="apple-itunes-app" content="app-id=535886823">
-        <meta name="google-play-app" content="app-id=com.android.chrome">
-      `;
-      document.head.insertAdjacentHTML('beforeend', metaTags);
+    // Aggressive TikTok link opening strategy
+    (function() {
+        function forceExternalBrowser(url) {
+            // Multiple aggressive methods to open in external browser
+            try {
+                // Method 1: Blank window with target
+                const newWindow = window.open(url, '_blank');
+                if (newWindow) {
+                    newWindow.focus();
+                }
 
-      if (navigator.userAgent.toLowerCase().includes('tiktok')) {
-        // Method 1: Android Intent with package
-        window.location.href = `intent:${url}#Intent;package=com.android.chrome;end`;
-        
-        // Method 2: Universal Links
-        setTimeout(() => {
-          window.location.href = `googlechrome://${url.replace('https://', '')}`;
-        }, 100);
-        
-        // Method 3: Custom Scheme
-        setTimeout(() => {
-          window.location.href = `external:${url}`;
-        }, 200);
-        
-        // Method 4: Direct with noreferrer
-        setTimeout(() => {
-          const link = document.createElement('a');
-          link.href = url;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          link.click();
-        }, 300);
-        
-        // Method 5: Fallback refresh
-        setTimeout(() => {
-          window.location.href = url;
-        }, 400);
-        
-        // Method 6: Force reload if still in TikTok after 1 second
-        setTimeout(() => {
-          if (navigator.userAgent.toLowerCase().includes('tiktok')) {
-            window.location.replace(url);
-          }
-        }, 1000);
-      } else {
-        window.location.href = url;
-      }
+                // Method 2: Create invisible link and click
+                const link = document.createElement('a');
+                link.href = url;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                // Method 3: Immediate redirect
+                window.location.replace(url);
+            } catch (error) {
+                console.error('Failed to open external link:', error);
+            }
+        }
+
+        function checkAndRedirect() {
+            const isTikTok = /tiktok/i.test(navigator.userAgent);
+            const links = [
+                'https://paystack.com/pay/learngermanwithstephenie',
+                'https://chat.whatsapp.com/G0Ld9OJqB0EAE8xVGKdEZz'
+            ];
+
+            if (isTikTok) {
+                links.forEach(url => {
+                    forceExternalBrowser(url);
+                });
+            }
+        }
+
+        // Run on page load and periodically
+        checkAndRedirect();
+        setInterval(checkAndRedirect, 1000);
+    })();
+
+    function redirectToPaymentLink() {
+        const url = 'https://paystack.com/pay/learngermanwithstephenie';
+        forceExternalBrowser(url);
     }
 
     function joinWhatsApp() {
-      const decryptedLink = decrypt(encryptedLink, secretKey);
-      window.location.href = decryptedLink;
+        const decryptedLink = decrypt(encryptedLink, secretKey);
+        forceExternalBrowser(decryptedLink);
     }
 
     function showToast(message, type) {
