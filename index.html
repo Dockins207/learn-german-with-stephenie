@@ -255,6 +255,32 @@
             transform: rotate(-45deg);
             white-space: nowrap;
         }
+
+        .support-contact {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+            width: 100%;
+            display: block;
+        }
+
+        .support-contact a {
+            color: #333;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+
+        .support-contact a:hover {
+            color: #666;
+        }
+
+        .whatsapp-note {
+            font-size: 0.7em;
+            color: white;
+            margin-top: 5px;
+            font-weight: normal;
+        }
     </style>
 </head>
 <body>
@@ -296,10 +322,14 @@
                 readonly
             >
             <button onclick="copyLink()" class="copy-button">
-                 Copy Link
+                 Copy GROUP Link
             </button>
         </div>
         <div class="link-tip">💡 Pro Tip: Copy this link and open it in Chrome, Safari, or another browser to access the WhatsApp group</div>
+        <div class="support-contact">
+            Support WhatsApp: +254 745 228 956 (Texts Only)
+            <p class="whatsapp-note">Note: Copy this number and message on WhatsApp app</p>
+        </div>
     </div>
 
     <div id="toast-container"></div>
