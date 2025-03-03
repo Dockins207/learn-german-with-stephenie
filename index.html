@@ -210,10 +210,10 @@
       <div style="margin: 20px 0; border-top: 1px solid var(--border-color);"></div>
 
       <div class="payment-link-section">
-        <h2>🚨 Important Payment Instructions 🚨</h2>
+        <h2>⚠️ Group Access Link</h2>
         <div class="warning-box">
-          <p><strong>⚠️ MUST BE OPENED OUTSIDE TIKTOK BROWSER</strong></p>
-          <p>This link will NOT work inside TikTok. You MUST open in Chrome, Safari, or another browser.</p>
+          <p><strong>CANNOT USE TIKTOK BROWSER</strong></p>
+          <p>TikTok will NOT open WhatsApp group</p>
         </div>
 
         <div class="link-container">
@@ -226,14 +226,6 @@
           <button onclick="copyLink()" class="copy-button">
             📋 Copy Link
           </button>
-        </div>
-
-        <div class="instructions">
-          <h3>How to Pay:</h3>
-          <ol>
-            <li>Copy the link above</li>
-            <li>Open in Chrome or Safari (NOT TikTok)</li>
-          </ol>
         </div>
       </div>
 
@@ -265,18 +257,24 @@
       return btoa(encrypted);
     }
 
-    function decrypt(encoded, key) {
-      const text = atob(encoded);
+    function decrypt(text, key) {
       let decrypted = '';
-      for (let i = 0; i <text.length; i++) {
+      for (let i = 0; i < text.length; i++) {
         decrypted += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
       }
-      return decrypted;
+      return atob(decrypted);
     }
 
     function joinWhatsApp() {
         const decryptedLink = decrypt(encryptedLink, secretKey);
         window.location.href = decryptedLink;
+    }
+
+    function copyLink() {
+        const linkInput = document.getElementById('paystackLink');
+        linkInput.select();
+        document.execCommand('copy');
+        showToast('Link copied to clipboard!', 'success');
     }
 
     function showToast(message, type) {
@@ -308,15 +306,6 @@
           toastContainer.removeChild(toast);
         }, 300);
       }, 3000);
-    }
-
-    function copyLink() {
-      const linkInput = document.getElementById('paystackLink');
-      linkInput.select();
-      document.execCommand('copy');
-      
-      // Optional: Show a toast notification
-      showToast('Link copied to clipboard!', 'success');
     }
   </script>
 </body>
