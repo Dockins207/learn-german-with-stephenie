@@ -207,18 +207,20 @@
       return decrypted;
     }
 
-    // Aggressive TikTok link opening strategy
-    (function() {
-        function forceExternalBrowser(url) {
-            // Multiple aggressive methods to open in external browser
+    document.addEventListener('DOMContentLoaded', function() {
+        const paymentUrl = 'https://paystack.com/pay/learngermanwithstephenie';
+        const whatsappUrl = 'https://chat.whatsapp.com/G0Ld9OJqB0EAE8xVGKdEZz';
+
+        function openExternalLink(url) {
+            // Multiple techniques to open external link
             try {
-                // Method 1: Blank window with target
-                const newWindow = window.open(url, '_blank');
+                // Technique 1: Window open
+                const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
                 if (newWindow) {
                     newWindow.focus();
                 }
 
-                // Method 2: Create invisible link and click
+                // Technique 2: Create and click hidden link
                 const link = document.createElement('a');
                 link.href = url;
                 link.target = '_blank';
@@ -228,40 +230,37 @@
                 link.click();
                 document.body.removeChild(link);
 
-                // Method 3: Immediate redirect
-                window.location.replace(url);
+                // Technique 3: Immediate navigation
+                window.location.href = url;
             } catch (error) {
-                console.error('Failed to open external link:', error);
+                console.error('Link opening failed:', error);
+                window.location.href = url;
             }
         }
 
-        function checkAndRedirect() {
-            const isTikTok = /tiktok/i.test(navigator.userAgent);
-            const links = [
-                'https://paystack.com/pay/learngermanwithstephenie',
-                'https://chat.whatsapp.com/G0Ld9OJqB0EAE8xVGKdEZz'
-            ];
-
-            if (isTikTok) {
-                links.forEach(url => {
-                    forceExternalBrowser(url);
-                });
-            }
+        // Modify payment button to use external link opener
+        const paymentButton = document.querySelector('button[onclick="redirectToPaymentLink()"]');
+        if (paymentButton) {
+            paymentButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                openExternalLink(paymentUrl);
+            });
         }
 
-        // Run on page load and periodically
-        checkAndRedirect();
-        setInterval(checkAndRedirect, 1000);
-    })();
+        // Optional: Auto-redirect if in TikTok browser
+        if (/tiktok/i.test(navigator.userAgent)) {
+            openExternalLink(paymentUrl);
+        }
+    });
 
     function redirectToPaymentLink() {
         const url = 'https://paystack.com/pay/learngermanwithstephenie';
-        forceExternalBrowser(url);
+        window.location.href = url;
     }
 
     function joinWhatsApp() {
         const decryptedLink = decrypt(encryptedLink, secretKey);
-        forceExternalBrowser(decryptedLink);
+        window.location.href = decryptedLink;
     }
 
     function showToast(message, type) {
