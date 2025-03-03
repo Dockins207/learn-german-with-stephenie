@@ -75,46 +75,6 @@
       transform: none;
     }
     
-    .verification-section {
-      margin-top: 30px;
-      padding: 30px;
-      background: #f8faf8;
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
-    }
-    
-    textarea {
-      width: calc(100% - 30px);
-      padding: 15px;
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
-      margin: 15px auto;
-      font-family: inherit;
-      resize: vertical;
-      min-height: 100px;
-      transition: border-color 0.3s ease;
-      display: block;
-    }
-    
-    textarea:focus {
-      outline: none;
-      border-color: var(--primary-color);
-    }
-    
-    .success-card {
-      background-color: #e8f5e9;
-      padding: 25px;
-      border-radius: 12px;
-      margin-top: 20px;
-      border: 1px solid #c8e6c9;
-    }
-    
-    .success-icon {
-      color: var(--primary-color);
-      font-size: 48px;
-      margin-bottom: 15px;
-    }
-    
     .whatsapp-button {
       background-color: #25D366;
       color: white;
@@ -145,37 +105,18 @@
       filter: invert(1);
     }
     
-    .spinner {
-      display: none;
-      width: 30px;
-      height: 30px;
-      border: 3px solid #e8f5e9;
-      border-top: 3px solid var(--primary-color);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
+    .success-card {
+      background-color: #e8f5e9;
+      padding: 25px;
+      border-radius: 12px;
+      margin-top: 20px;
+      border: 1px solid #c8e6c9;
     }
     
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    #mainContent {
-      display: block;
-    }
-    
-    p {
-      color: #546e7a;
-      line-height: 1.6;
-      margin: 10px 0;
-    }
-    
-    footer .feature-note {
-      color: #ff5722;
-      font-size: 0.8em;
-      margin-top: 5px;
-      font-weight: bold;
+    .success-icon {
+      color: var(--primary-color);
+      font-size: 48px;
+      margin-bottom: 15px;
     }
     
     /* Toast Notification Styles */
@@ -228,20 +169,6 @@
       </div>
 
       <div style="margin: 20px 0; border-top: 1px solid var(--border-color);"></div>
-
-      <div class="verification-section" style="display: block;">
-        <h3>Already Paid But No Access?</h3>
-        <div class="notice-box" style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ffe0b2;">
-          <p style="color: #e65100; margin: 0;">
-            <strong>Important:</strong> Verification for previous payments without group access.
-          </p>
-        </div>
-        <p>Paste your previous M-Pesa message below to verify your payment:</p>
-        <textarea id="mpesaMessage" placeholder="Paste your M-Pesa message here (e.g., TC235JF3WJ Confirmed...)"></textarea>
-        <button onclick="verifyPayment()" id="verifyButton" class="button">Verify Previous Payment</button>
-        <div id="loadingSpinner" class="spinner"></div>
-        <div id="verificationResult"></div>
-      </div>
     </div>
   </div>
 
@@ -250,7 +177,6 @@
   <footer>
     <div class="footer-content">
       <div class="footer-left">
-        <p class="feature-note"> Verification feature will be disabled soon</p>
       </div>
       <div class="footer-right">
       </div>
@@ -261,7 +187,7 @@
     const secretKey = 'germanClass2025';
     const whatsappUrl = 'https://chat.whatsapp.com/G0Ld9OJqB0EAE8xVGKdEZz';
     const encryptedLink = encrypt(whatsappUrl, secretKey);
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzqfSwwAzL6wF2E_91uylLBl0R0t6x3Dcee3aQ0zDW6N299AskCLxDvicuXim2UrDWn/exec';
+    const GOOGLE_SCRIPT_URL = ''; // No longer needed
     let isVerifying = false;
 
     function encrypt(text, key) {
@@ -331,99 +257,9 @@
       }
     }
 
-    async function verifyPayment() {
-      if (isVerifying) return;
-
-      const mpesaMessage = document.getElementById('mpesaMessage').value.trim();
-      if (!mpesaMessage) {
-        showToast('Please paste your M-Pesa message', 'error');
-        return;
-      }
-
-      // Basic validation first
-      if (!mpesaMessage.includes('PAYSTACK PAYMENTS KENYA LIMITED') || 
-          !mpesaMessage.includes('Ksh') || 
-          !mpesaMessage.includes('Confirmed')) {
-        showToast('Invalid M-Pesa message format', 'error');
-        return;
-      }
-
-      // Extract transaction ID and amount
-      const transactionMatch = mpesaMessage.match(/([A-Z0-9]{10})\s+Confirmed/);
-      const amountMatch = mpesaMessage.match(/Ksh([\d,.]+)/);
-
-      if (!transactionMatch || !amountMatch) {
-        showToast('Could not find transaction details in the message', 'error');
-        return;
-      }
-
-      const amount = parseFloat(amountMatch[1].replace(',', ''));
-      if (amount !== 200) {
-        showToast('Invalid payment amount. Expected Ksh 200.00', 'error');
-        return;
-      }
-
-      const resultDiv = document.getElementById('verificationResult');
-      const verifyButton = document.getElementById('verifyButton');
-      const loadingSpinner = document.getElementById('loadingSpinner');
-
-      isVerifying = true;
-      verifyButton.disabled = true;
-      verifyButton.textContent = 'Verifying...';
-      loadingSpinner.style.display = 'block';
-      resultDiv.innerHTML = '';
-
-      try {
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {
-            'Content-Type': 'text/plain',
-          },
-          body: mpesaMessage
-        });
-
-        const result = await response.text();
-        if (result === 'Success') {
-          const decryptedLink = decrypt(encryptedLink, secretKey);
-          resultDiv.innerHTML = `
-            <div class="success-card">
-              <div class="success-icon">✓</div>
-              <h3>Payment Verified!</h3>
-              <p>Your payment has been successfully verified.</p>
-              <button onclick="joinWhatsApp()" class="whatsapp-button">
-                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMSAxMS41YTguMzggOC4zOCAwIDAgMS0uOSAzLjggOC41IDguNSAwIDAgMS03LjYgNC43IDguMzggOC4zOCAwIDAgMS0zLjgtLjlMMyAyMWwxLjktNS43YTguMzggOC4zOCAwIDAgMS0uOS0zLjggOC41IDguNSAwIDAgMSA0LjctNy42IDguMzggOC4zOCAwIDAgMSAzLjgtLjloLjVhOC40OCA4LjQ4IDAgMCAxIDggOHYuNXoiPjwvcGF0aD48L3N2Zz4=" alt="WhatsApp" class="whatsapp-icon">
-                Join WhatsApp Group
-              </button>
-            </div>
-          `;
-          document.getElementById('mpesaMessage').value = '';
-          sessionStorage.setItem('whatsappLink', decryptedLink);
-          setTimeout(() => {
-            sessionStorage.removeItem('whatsappLink');
-          }, 300000); // 5 minutes
-        } else {
-          showToast(result === 'Duplicate transaction' ? 'This transaction has already been used' : 'Invalid M-Pesa message format', 'error');
-          resultDiv.innerHTML = '';
-        }
-      } catch (error) {
-        showToast('Error verifying payment. Please try again.', 'error');
-        resultDiv.innerHTML = '';
-      } finally {
-        isVerifying = false;
-        verifyButton.disabled = false;
-        verifyButton.textContent = 'Verify Previous Payment';
-        loadingSpinner.style.display = 'none';
-      }
-    }
-
     function joinWhatsApp() {
-      const storedLink = sessionStorage.getItem('whatsappLink');
-      if (!storedLink) {
-        showToast('Please verify your payment first', 'error');
-        return;
-      }
-      openInExternalBrowser(storedLink);
+      const decryptedLink = decrypt(encryptedLink, secretKey);
+      window.location.href = decryptedLink;
     }
 
     function showToast(message, type) {
