@@ -211,56 +211,28 @@
         const paymentUrl = 'https://paystack.com/pay/learngermanwithstephenie';
         const whatsappUrl = 'https://chat.whatsapp.com/G0Ld9OJqB0EAE8xVGKdEZz';
 
-        function openExternalLink(url) {
-            // Multiple techniques to open external link
-            try {
-                // Technique 1: Window open
-                const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-                if (newWindow) {
-                    newWindow.focus();
-                }
-
-                // Technique 2: Create and click hidden link
-                const link = document.createElement('a');
-                link.href = url;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-                link.style.display = 'none';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-
-                // Technique 3: Immediate navigation
-                window.location.href = url;
-            } catch (error) {
-                console.error('Link opening failed:', error);
-                window.location.href = url;
-            }
-        }
-
         // Modify payment button to use external link opener
         const paymentButton = document.querySelector('button[onclick="redirectToPaymentLink()"]');
         if (paymentButton) {
             paymentButton.addEventListener('click', function(event) {
                 event.preventDefault();
-                openExternalLink(paymentUrl);
+                redirectToPaymentLink();
             });
         }
 
         // Optional: Auto-redirect if in TikTok browser
         if (/tiktok/i.test(navigator.userAgent)) {
-            openExternalLink(paymentUrl);
+            redirectToPaymentLink();
         }
     });
 
     function redirectToPaymentLink() {
-        const url = 'https://paystack.com/pay/learngermanwithstephenie';
-        window.location.href = url;
+        window.open('https://paystack.com/pay/learngermanwithstephenie', '_blank');
     }
 
     function joinWhatsApp() {
         const decryptedLink = decrypt(encryptedLink, secretKey);
-        window.location.href = decryptedLink;
+        window.open(decryptedLink, '_blank');
     }
 
     function showToast(message, type) {
