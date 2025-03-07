@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Copyright from './Copyright';
+import { Analytics } from '@vercel/analytics/react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -37,6 +38,7 @@ const Layout = ({ children }: LayoutProps) => {
 
       {/* Copyright Notice */}
       <Copyright />
+      <Analytics />
     </div>
   );
 };
