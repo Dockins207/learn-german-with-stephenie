@@ -2,17 +2,24 @@ import Layout from '@components/Layout';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { classroomService } from '@services/classroomService';
+import { liveClassroomService } from '@services/liveClassroomService';
 
 interface Classroom {
   id: string;
   name: string;
   meetLink: string;
-  status: 'empty' | 'booked';
+  status: 'empty' | 'booked' | 'live';
   bookingDetails?: {
     day: string;
     time: string;
     level: string;
     topic: string;
+  };
+  recordingStatus?: {
+    isRecording: boolean;
+    startedAt: string;
+    recordingUrl?: string;
   };
 }
 
@@ -29,43 +36,42 @@ export default function Classrooms() {
   const [classroomsState, setClassroomsState] = useState(classrooms);
 
   // Function to update classroom status based on backend signal
-  const updateClassroomStatus = (classroomId: string, status: 'empty' | 'booked', bookingDetails?: { 
+  const updateClassroomStatus = (classroomId: string, status: 'empty' | 'booked' | 'live', bookingDetails?: { 
     day: string; 
     time: string;
     level: string;
     topic: string;
+  }, recordingStatus?: {
+    isRecording: boolean;
+    startedAt: string;
+    recordingUrl?: string;
   }) => {
     setClassroomsState(prev => 
       prev.map(classroom => 
-        classroom.id === classroomId ? { ...classroom, status, bookingDetails } : classroom
+        classroom.id === classroomId ? { ...classroom, status, bookingDetails, recordingStatus } : classroom
       )
     );
   };
 
   // Example of how to listen for backend signals
-  // In a real application, you would replace this with your actual backend signal listener
   useEffect(() => {
-    // Example: Listen for WebSocket messages or API updates
-    // const socket = new WebSocket('your-backend-url');
-    // socket.onmessage = (event) => {
-    //   const data = JSON.parse(event.data);
-    //   updateClassroomStatus(data.classroomId, data.status, data.bookingDetails);
-    // };
-
     // For demonstration, we'll simulate a backend update after 2 seconds
     setTimeout(() => {
-      // Example: Update classroom 1 to booked
-      updateClassroomStatus('1', 'booked', { 
+      // Example: Update classroom 1 to live with recording
+      updateClassroomStatus('1', 'live', { 
         day: 'Monday', 
         time: '10:00 AM', 
         level: 'A1', 
         topic: 'Basic Greetings and Introductions'
+      }, {
+        isRecording: true,
+        startedAt: new Date().toISOString(),
+        recordingUrl: 'https://example.com/recording-1.mp4'
       });
     }, 2000);
 
     return () => {
       // Clean up the listener when component unmounts
-      // socket.close();
     };
   }, []);
 
@@ -78,7 +84,7 @@ export default function Classrooms() {
             <div key={classroom.id} className="bg-white rounded-lg shadow-md p-8 h-56 relative">
               <div className="absolute top-4 left-4">
                 <h2 className="text-xl font-semibold text-gray-900">{classroom.name}</h2>
-                {classroom.status === 'booked' && classroom.bookingDetails && (
+                {classroom.status === 'live' && classroom.bookingDetails && (
                   <div className="text-sm text-gray-600 mt-1">
                     <p>Day: {classroom.bookingDetails.day}</p>
                     <p>Time: {classroom.bookingDetails.time}</p>
@@ -87,18 +93,6 @@ export default function Classrooms() {
                   </div>
                 )}
               </div>
-              {classroom.status === 'booked' && (
-                <div className="absolute top-4 right-4">
-                  <button
-                    onClick={() => {
-                      toast.success('Attendance confirmed!');
-                    }}
-                    className="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
-                  >
-                    Confirm Attendance
-                  </button>
-                </div>
-              )}
               <div className="absolute bottom-4 left-4">
                 <a
                   href={classroom.meetLink}
@@ -112,10 +106,14 @@ export default function Classrooms() {
               <div className="absolute bottom-4 right-4">
                 <div 
                   className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    classroom.status === 'empty' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                    classroom.status === 'empty' ? 'bg-green-500 text-white' : 
+                    classroom.status === 'booked' ? 'bg-red-500 text-white' : 
+                    'bg-yellow-500 text-white'
                   }`}
                 >
-                  {classroom.status === 'empty' ? 'Empty' : 'Booked'}
+                  {classroom.status === 'empty' ? 'Empty' : 
+                   classroom.status === 'booked' ? 'Booked' : 
+                   'Live'}
                 </div>
               </div>
             </div>
