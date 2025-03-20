@@ -29,10 +29,19 @@ export const classroomService = {
   // Update classroom status
   updateClassroomStatus: async (classroomId: string, status: boolean) => {
     try {
-      const response = await axios.put(`${API_URL}/classrooms/${classroomId}/status`, { booked: status });
-      return response.data;
+      await axios.put(`${API_URL}/classrooms/${classroomId}/status`, { booked: status });
     } catch (error) {
       toast.error('Failed to update classroom status');
+      throw error;
+    }
+  },
+
+  // Update classroom meet link
+  updateClassroomMeetLink: async (classroomId: string, meetLink: string) => {
+    try {
+      await axios.put(`${API_URL}/classrooms/${classroomId}/meet-link`, { meetLink });
+    } catch (error) {
+      toast.error('Failed to update classroom meet link');
       throw error;
     }
   },

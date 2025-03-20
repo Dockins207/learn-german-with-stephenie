@@ -4,11 +4,13 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { classroomService } from '@services/classroomService';
 import { liveClassroomService } from '@services/liveClassroomService';
+import { classroomLinks } from '@config/classroomLinks';
+
+type ClassroomId = '1' | '2' | '3' | '4' | '5' | '6';
 
 interface Classroom {
-  id: string;
+  id: ClassroomId;
   name: string;
-  meetLink: string;
   status: 'empty' | 'booked' | 'live';
   bookingDetails?: {
     day: string;
@@ -24,19 +26,20 @@ interface Classroom {
 }
 
 const classrooms: Classroom[] = [
-  { id: '1', name: '1. Berlin', meetLink: 'https://meet.google.com/ndr-seek-gth', status: 'empty' },
-  { id: '2', name: '2. Munich', meetLink: 'https://meet.google.com/gia-eoep-ygc', status: 'empty' },
-  { id: '3', name: '3. Hamburg', meetLink: 'https://meet.google.com/ota-yqbw-xff', status: 'empty' },
-  { id: '4', name: '4. Frankfurt', meetLink: 'https://meet.google.com/uyh-opkh-ueb', status: 'empty' },
-  { id: '5', name: '5. Cologne', meetLink: 'https://meet.google.com/nbp-hetn-sst', status: 'empty' },
-  { id: '6', name: '6. Stuttgart', meetLink: 'https://meet.google.com/ozv-iafc-jxp', status: 'empty' },
+  { id: '1', name: '1. Berlin', status: 'empty' },
+  { id: '2', name: '2. Munich', status: 'empty' },
+  { id: '3', name: '3. Hamburg', status: 'empty' },
+  { id: '4', name: '4. Frankfurt', status: 'empty' },
+  { id: '5', name: '5. Cologne', status: 'empty' },
+  { id: '6', name: '6. Stuttgart', status: 'empty' },
 ];
 
 export default function Classrooms() {
-  const [classroomsState, setClassroomsState] = useState(classrooms);
+  const [classroomsState, setClassroomsState] = useState<Classroom[]>(classrooms);
+  const [loading, setLoading] = useState(true);
 
   // Function to update classroom status based on backend signal
-  const updateClassroomStatus = (classroomId: string, status: 'empty' | 'booked' | 'live', bookingDetails?: { 
+  const updateClassroomStatus = (classroomId: ClassroomId, status: 'empty' | 'booked' | 'live', bookingDetails?: { 
     day: string; 
     time: string;
     level: string;
@@ -53,27 +56,45 @@ export default function Classrooms() {
     );
   };
 
-  // Example of how to listen for backend signals
+  // Fetch classrooms on mount
   useEffect(() => {
-    // For demonstration, we'll simulate a backend update after 2 seconds
-    setTimeout(() => {
-      // Example: Update classroom 1 to live with recording
-      updateClassroomStatus('1', 'live', { 
-        day: 'Monday', 
-        time: '10:00 AM', 
-        level: 'A1', 
-        topic: 'Basic Greetings and Introductions'
-      }, {
-        isRecording: true,
-        startedAt: new Date().toISOString(),
-        recordingUrl: 'https://example.com/recording-1.mp4'
-      });
-    }, 2000);
-
-    return () => {
-      // Clean up the listener when component unmounts
+    const fetchClassrooms = async () => {
+      try {
+        const data = await classroomService.getAllClassrooms();
+        // Type assertion since we know the data structure matches our Classroom type
+        setClassroomsState(data as Classroom[]);
+      } catch (error) {
+        console.error('Error fetching classrooms:', error);
+        toast.error('Failed to fetch classrooms');
+      } finally {
+        setLoading(false);
+      }
     };
+
+    fetchClassrooms();
   }, []);
+
+  // Handle classroom join
+  const handleJoinClass = (classroom: Classroom) => {
+    // Get the meet link from the configuration
+    const meetLink = classroomLinks[classroom.id];
+    if (!meetLink) {
+      toast.error('Meet link not found for this classroom');
+      return;
+    }
+    // Open the classroom in the same page
+    window.location.href = meetLink;
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">Loading classrooms...</h1>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -94,14 +115,12 @@ export default function Classrooms() {
                 )}
               </div>
               <div className="absolute bottom-4 left-4">
-                <a
-                  href={classroom.meetLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => handleJoinClass(classroom)}
                   className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
                   Join Class
-                </a>
+                </button>
               </div>
               <div className="absolute bottom-4 right-4">
                 <div 

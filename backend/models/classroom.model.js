@@ -19,6 +19,13 @@ class Classroom {
     classroom.booked = booked;
     await classroom.save();
   }
+
+  static async updateMeetLink(id, meetLink, sequelize) {
+    const Classroom = sequelize.model('Classroom');
+    const classroom = await Classroom.findByPk(id);
+    classroom.meet_link = meetLink;
+    await classroom.save();
+  }
 }
 
 module.exports = (sequelize) => {
@@ -56,6 +63,10 @@ module.exports = (sequelize) => {
     time: {
       type: DataTypes.TIME,
       allowNull: false
+    },
+    meet_link: {
+      type: DataTypes.STRING,
+      allowNull: false
     }
   }, {
     timestamps: true,
@@ -72,6 +83,7 @@ module.exports = (sequelize) => {
   Classroom.getAll = Classroom.getAll;
   Classroom.getStatus = Classroom.getStatus;
   Classroom.updateStatus = Classroom.updateStatus;
+  Classroom.updateMeetLink = Classroom.updateMeetLink;
 
   return Classroom;
 };
