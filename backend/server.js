@@ -1,9 +1,10 @@
+require('module-alias/register');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const { connectDB } = require('./config/db');
+const { sequelize, connectDB } = require('./config/db');
 const { verifyToken } = require('./utils/jwt');
 
 const app = express();
@@ -25,21 +26,38 @@ app.use((req, res, next) => {
   next();
 });
 
-// Connect to database
-connectDB();
+// Connect to database and sync models
+connectDB()
+  .then(() => {
+    // Initialize models
+    const Student = require('@models/student.model')(sequelize);
+    const Classroom = require('@models/classroom.model')(sequelize);
+    const Attendance = require('@models/attendance.model')(sequelize);
 
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/classroom', require('./routes/classroom'));
-app.use('/api/attendance', require('./routes/attendance'));
+    // Sync models with database
+    return sequelize.sync();
+  })
+  .then(() => {
+    console.log('Models synchronized with database');
+    
+    // Routes
+    app.use('/api/auth', require('./routes/auth.routes'));
+    app.use('/api/classrooms', require('./routes/classroom.routes'));
+    app.use('/api/attendance', require('./routes/attendance.routes'));
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
-});
+    // Error handling middleware
+    app.use((err, req, res, next) => {
+      console.error(err.stack);
+      res.status(500).json({ error: 'Something went wrong!' });
+    });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+    // Start server
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Error starting server:', err);
+    process.exit(1);
+  });

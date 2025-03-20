@@ -6,38 +6,39 @@ const { pool } = require('@config/db');
 const authenticateToken = require('@middleware/auth');
 const { generateToken } = require('@utils/jwt');
 
-// Register new user
+// Register new student
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, displayName } = req.body;
+    const { email, password, first_name, last_name } = req.body;
 
-    // Check if user already exists
-    const existingUser = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
+    // Check if student already exists
+    const existingStudent = await pool.query(
+      'SELECT * FROM students WHERE email = $1',
       [email]
     );
 
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({ message: 'User already exists' });
+    if (existingStudent.rows.length > 0) {
+      return res.status(400).json({ message: 'Student already exists' });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
+    // Create new student
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, display_name) VALUES ($1, $2, $3) RETURNING *',
-      [email, hashedPassword, displayName]
+      'INSERT INTO students (email, password_hash, first_name, last_name, role) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [email, hashedPassword, first_name, last_name, 'student']
     );
 
     // Generate JWT token
-    const token = generateToken({ userId: result.rows[0].user_id });
+    const token = generateToken({ studentId: result.rows[0].id });
     res.status(201).json({
       token,
-      user: {
-        userId: result.rows[0].user_id,
+      student: {
+        id: result.rows[0].id,
         email,
-        displayName
+        first_name,
+        last_name
       }
     });
   } catch (error) {
@@ -46,35 +47,36 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login user
+// Login student
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user by email
-    const user = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
+    // Find student by email
+    const student = await pool.query(
+      'SELECT * FROM students WHERE email = $1',
       [email]
     );
 
-    if (user.rows.length === 0 || !user.rows[0].is_active) {
+    if (student.rows.length === 0 || !student.rows[0].is_active) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Verify password
-    const validPassword = await bcrypt.compare(password, user.rows[0].password_hash);
+    const validPassword = await bcrypt.compare(password, student.rows[0].password_hash);
     if (!validPassword) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Generate JWT token
-    const token = generateToken({ userId: user.rows[0].user_id });
+    const token = generateToken({ studentId: student.rows[0].id });
     res.json({
       token,
-      user: {
-        userId: user.rows[0].user_id,
+      student: {
+        id: student.rows[0].id,
         email,
-        displayName: user.rows[0].display_name
+        first_name: student.rows[0].first_name,
+        last_name: student.rows[0].last_name
       }
     });
   } catch (error) {
@@ -83,14 +85,15 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Get user profile (protected route)
+// Get student profile (protected route)
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
     res.json({
-      user: {
-        userId: req.user.user_id,
-        email: req.user.email,
-        displayName: req.user.display_name
+      student: {
+        id: req.student.id,
+        email: req.student.email,
+        first_name: req.student.first_name,
+        last_name: req.student.last_name
       }
     });
   } catch (error) {

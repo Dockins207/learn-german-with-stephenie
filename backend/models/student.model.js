@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const bcrypt = require('bcrypt');
 
 module.exports = (sequelize) => {
-    const User = sequelize.define('User', {
+    const Student = sequelize.define('Student', {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -27,7 +27,7 @@ module.exports = (sequelize) => {
         },
         role: {
             type: DataTypes.STRING(20),
-            defaultValue: 'user'
+            defaultValue: 'student'
         },
         is_active: {
             type: DataTypes.BOOLEAN,
@@ -35,26 +35,33 @@ module.exports = (sequelize) => {
         }
     }, {
         timestamps: true,
-        tableName: 'users',
+        tableName: 'students',
         hooks: {
-            beforeCreate: async (user) => {
-                if (user.password) {
-                    user.password_hash = await bcrypt.hash(user.password, 10);
-                    delete user.password;
+            beforeCreate: async (student) => {
+                if (student.password) {
+                    student.password_hash = await bcrypt.hash(student.password, 10);
+                    delete student.password;
                 }
             },
-            beforeUpdate: async (user) => {
-                if (user.changed('password')) {
-                    user.password_hash = await bcrypt.hash(user.password, 10);
-                    delete user.password;
+            beforeUpdate: async (student) => {
+                if (student.changed('password')) {
+                    student.password_hash = await bcrypt.hash(student.password, 10);
+                    delete student.password;
                 }
             }
         }
     });
 
-    User.prototype.validatePassword = async function(password) {
+    Student.prototype.validatePassword = async function(password) {
         return bcrypt.compare(password, this.password_hash);
     };
 
-    return User;
+    Student.associate = (models) => {
+        Student.hasMany(models.Attendance, {
+            foreignKey: 'student_id',
+            as: 'attendance'
+        });
+    };
+
+    return Student;
 };

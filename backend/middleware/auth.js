@@ -11,16 +11,16 @@ const authenticateToken = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await pool.query(
-        'SELECT * FROM users WHERE user_id = $1',
-        [decoded.userId]
+      const student = await pool.query(
+        'SELECT * FROM students WHERE id = $1',
+        [decoded.studentId]
       );
 
-      if (user.rows.length === 0 || !user.rows[0].is_active) {
-        return res.status(401).json({ message: 'Invalid user' });
+      if (student.rows.length === 0 || !student.rows[0].is_active) {
+        return res.status(401).json({ message: 'Invalid student' });
       }
 
-      req.user = user.rows[0];
+      req.student = student.rows[0];
       next();
     } catch (jwtError) {
       console.error('JWT verification error:', jwtError);

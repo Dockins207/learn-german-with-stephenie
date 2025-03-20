@@ -1,10 +1,10 @@
-import Layout from '@components/Layout';
+import Layout from '@/components/Layout';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { classroomService } from '@services/classroomService';
-import { liveClassroomService } from '@services/liveClassroomService';
-import { classroomLinks } from '@config/classroomLinks';
+import { classroomService } from '@/services/classroomService';
+import { liveClassroomService } from '@/services/liveClassroomService';
+import { classroomLinks } from '@/constants/classroomLinks';
 
 type ClassroomId = '1' | '2' | '3' | '4' | '5' | '6';
 
@@ -58,16 +58,22 @@ export default function Classrooms() {
 
   // Fetch classrooms on mount
   useEffect(() => {
+    // Initialize with local data immediately
+    setClassroomsState(classrooms);
+    setLoading(false);
+
+    // Try to fetch from backend in background
     const fetchClassrooms = async () => {
       try {
         const data = await classroomService.getAllClassrooms();
-        // Type assertion since we know the data structure matches our Classroom type
-        setClassroomsState(data as Classroom[]);
+        // Merge backend data with local classroom data
+        const updatedClassrooms = classrooms.map(classroom => {
+          const backendData = data.find((c: any) => c.id === classroom.id);
+          return backendData ? { ...classroom, ...backendData } : classroom;
+        });
+        setClassroomsState(updatedClassrooms);
       } catch (error) {
         console.error('Error fetching classrooms:', error);
-        toast.error('Failed to fetch classrooms');
-      } finally {
-        setLoading(false);
       }
     };
 

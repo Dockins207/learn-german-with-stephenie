@@ -8,13 +8,24 @@ import {
   BookOpenIcon,
   UserGroupIcon,
   UserCircleIcon,
+  ArrowLeftOnRectangleIcon,
 } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/router';
+import { useAuth } from '@/context/AuthContext';
 
 interface SidebarProps {
   isOpen: boolean;
 }
 
 const Sidebar = ({ isOpen }: SidebarProps) => {
+  const router = useRouter();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
   return (
     <div className={`h-full transition-all duration-300 ${
       isOpen ? 'w-48' : 'w-16'
@@ -44,7 +55,11 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
             </Link>
             <Link href="/materials" className="block px-4 py-3 flex items-center space-x-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors">
               <BookOpenIcon className="w-5 h-5 flex-shrink-0" />
-              {isOpen && <span className="block">Study Materials</span>}
+              {isOpen && <span className="block">Learning Materials</span>}
+            </Link>
+            <Link href="/profile" className="block px-4 py-3 flex items-center space-x-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors">
+              <UserCircleIcon className="w-5 h-5 flex-shrink-0" />
+              {isOpen && <span className="block">Student Profile</span>}
             </Link>
             <Link href="/peers" className="block px-4 py-3 flex items-center space-x-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors">
               <UserGroupIcon className="w-5 h-5 flex-shrink-0" />
@@ -65,6 +80,17 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
               </Link>
             )}
           </div>
+        </div>
+
+        {/* Logout button below profile */}
+        <div className="border-t border-gray-200 px-4 py-3">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors rounded-md p-2"
+          >
+            <ArrowLeftOnRectangleIcon className="w-5 h-5 flex-shrink-0" />
+            {isOpen && <span className="block">Logout</span>}
+          </button>
         </div>
       </div>
     </div>

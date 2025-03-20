@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS classroom_attendance (
     id SERIAL PRIMARY KEY,
     classroom_id INT REFERENCES classrooms(id) ON DELETE CASCADE,
-    student_id INT REFERENCES users(id) ON DELETE CASCADE,
+    student_id INT REFERENCES students(id) ON DELETE CASCADE,
     confirmed BOOLEAN DEFAULT FALSE,
     joined BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,

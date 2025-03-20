@@ -9,6 +9,9 @@ router.post('/register', AuthController.register);
 // Login
 router.post('/login', AuthController.login);
 
+// Refresh token
+router.post('/refresh-token', AuthController.refreshToken);
+
 // Get current user profile (protected route)
 router.get('/me', authMiddleware, AuthController.getProfile);
 

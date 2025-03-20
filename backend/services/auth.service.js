@@ -1,118 +1,160 @@
 const jwt = require('jsonwebtoken');
-const User = require('@models/user.model');
+const bcrypt = require('bcrypt');
+const { sequelize } = require('@config/db');
 const { Op } = require('sequelize');
+const Student = require('@models/student.model')(sequelize);
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+const REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '7d';
+
+const generateToken = (student) => {
+  return {
+    access_token: jwt.sign(
+      {
+        id: student.id,
+        email: student.email,
+        role: student.role
+      },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    ),
+    refresh_token: jwt.sign(
+      {
+        id: student.id,
+        email: student.email,
+        role: student.role
+      },
+      JWT_SECRET,
+      { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
+    )
+  };
+};
 
 class AuthService {
-    async register(userData) {
+    async register(studentData) {
         try {
             // Check if email already exists
-            const existingUser = await User.findOne({
+            const existingStudent = await Student.findOne({
                 where: {
-                    email: userData.email
+                    email: studentData.email
                 }
             });
 
-            if (existingUser) {
+            if (existingStudent) {
                 throw new Error('Email already exists');
             }
 
-            // Check if first name and last name are provided
-            if (!userData.firstName || !userData.lastName) {
-                throw new Error('First name and last name are required');
-            }
-
-            // Create new user
-            const user = await User.create(userData);
+            // Create new student with password_hash
+            const student = await Student.create({
+                email: studentData.email,
+                password_hash: studentData.password_hash, // Use the hashed password from the request
+                first_name: studentData.first_name,
+                last_name: studentData.last_name
+            });
 
             // Generate JWT token
-            const token = this.generateToken(user);
+            const tokens = generateToken(student);
 
             return {
-                user: user.toJSON(),
-                token
+                student: {
+                    id: student.id,
+                    email: student.email,
+                    first_name: student.first_name,
+                    last_name: student.last_name,
+                    role: student.role
+                },
+                ...tokens
             };
         } catch (error) {
-            throw new Error(error.message);
+            throw error;
         }
     }
 
-    async login(credentials) {
+    async login(email, password) {
         try {
-            // Find user by email
-            const user = await User.findOne({
+            const student = await Student.findOne({
                 where: {
-                    email: credentials.email
+                    email
                 }
             });
 
-            if (!user) {
-                throw new Error('Invalid credentials');
+            if (!student) {
+                throw new Error('Invalid email or password');
             }
 
-            // Validate password
-            const isValidPassword = await user.validatePassword(credentials.password);
+            const isValidPassword = await student.validatePassword(password);
             if (!isValidPassword) {
-                throw new Error('Invalid credentials');
+                throw new Error('Invalid email or password');
             }
 
-            // Generate JWT token
-            const token = this.generateToken(user);
+            const tokens = generateToken(student);
 
             return {
-                user: user.toJSON(),
-                token
+                student: {
+                    id: student.id,
+                    email: student.email,
+                    first_name: student.first_name,
+                    last_name: student.last_name,
+                    role: student.role
+                },
+                ...tokens
             };
         } catch (error) {
-            throw new Error(error.message);
+            throw error;
         }
     }
 
-    generateToken(user) {
-        const payload = {
-            id: user.id,
-            email: user.email,
-            role: user.role
-        };
-
-        return jwt.sign(payload, JWT_SECRET, {
-            expiresIn: JWT_EXPIRES_IN
-        });
-    }
-
-    verifyToken(token) {
+    async refreshToken(refreshToken) {
         try {
-            return jwt.verify(token, JWT_SECRET);
-        } catch (error) {
-            throw new Error('Invalid or expired token');
-        }
-    }
+            const decoded = jwt.verify(refreshToken, JWT_SECRET);
+            const student = await Student.findByPk(decoded.id);
 
-    async getUserById(userId) {
-        try {
-            const user = await User.findByPk(userId);
-            if (!user) {
-                throw new Error('User not found');
-            }
-            return user.toJSON();
-        } catch (error) {
-            throw new Error(error.message);
-        }
-    }
-
-    async updateUser(userId, updates) {
-        try {
-            const user = await User.findByPk(userId);
-            if (!user) {
-                throw new Error('User not found');
+            if (!student) {
+                throw new Error('Student not found');
             }
 
-            await user.update(updates);
-            return user.toJSON();
+            const tokens = generateToken(student);
+            return tokens;
         } catch (error) {
-            throw new Error(error.message);
+            throw new Error('Invalid refresh token');
+        }
+    }
+
+    async getProfile(studentId) {
+        try {
+            const student = await Student.findOne({
+                where: { id: studentId },
+                attributes: { exclude: ['password_hash'] }
+            });
+
+            if (!student) {
+                throw new Error('Student not found');
+            }
+
+            return {
+                id: student.id,
+                email: student.email,
+                first_name: student.first_name,
+                last_name: student.last_name,
+                role: student.role
+            };
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async updateProfile(studentId, updates) {
+        try {
+            const student = await Student.findByPk(studentId);
+            if (!student) {
+                throw new Error('Student not found');
+            }
+
+            await student.update(updates);
+            return student;
+        } catch (error) {
+            throw error;
         }
     }
 }

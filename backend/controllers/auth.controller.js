@@ -1,98 +1,171 @@
 const AuthService = require('@services/auth.service');
+const bcrypt = require('bcrypt');
 const { authMiddleware } = require('@middleware/auth.middleware');
 
 class AuthController {
-    // Register new user
+    // Register new student
     async register(req, res) {
         try {
             const { email, password, first_name, last_name } = req.body;
             
             if (!email || !password || !first_name || !last_name) {
                 return res.status(400).json({
+                    success: false,
                     message: 'Missing required fields',
                     fields: ['email', 'password', 'first_name', 'last_name']
                 });
             }
 
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid email format'
+                });
+            }
+
+            // Validate password strength
+            if (password.length < 6) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Password must be at least 6 characters long'
+                });
+            }
+
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Create student with hashed password
             const result = await AuthService.register({
                 email,
-                password,
+                password_hash: hashedPassword,
                 first_name,
                 last_name
             });
 
             res.status(201).json({
-                message: 'User registered successfully',
-                user: result.user,
-                token: result.token
+                success: true,
+                message: 'Student registered successfully',
+                student: result.student,
+                token: result.access_token,
+                refreshToken: result.refresh_token
             });
         } catch (error) {
+            console.error('Registration error:', error);
             res.status(400).json({
-                message: error.message,
-                error: error instanceof Error ? error.message : 'Registration failed'
+                success: false,
+                message: error.message || 'Registration failed'
             });
         }
     }
 
-    // Login user
     async login(req, res) {
         try {
             const { email, password } = req.body;
-
+            
             if (!email || !password) {
                 return res.status(400).json({
+                    success: false,
                     message: 'Missing required fields',
                     fields: ['email', 'password']
                 });
             }
 
-            const result = await AuthService.login({
-                email,
-                password
-            });
-
+            const result = await AuthService.login(email, password);
+            
             res.json({
-                message: 'Login successful',
-                user: result.user,
-                token: result.token
+                success: true,
+                token: result.access_token,
+                refreshToken: result.refresh_token,
+                student: result.student
             });
         } catch (error) {
+            console.error('Login error:', error);
             res.status(401).json({
-                message: error.message,
-                error: error instanceof Error ? error.message : 'Login failed'
+                success: false,
+                message: error.message || 'Invalid email or password'
             });
         }
     }
 
-    // Get current user profile
+    async refreshToken(req, res) {
+        try {
+            const { refresh_token } = req.body;
+            if (!refresh_token) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Refresh token is required'
+                });
+            }
+
+            const tokens = await AuthService.refreshToken(refresh_token);
+            res.json({
+                success: true,
+                ...tokens
+            });
+        } catch (error) {
+            console.error('Refresh token error:', error);
+            res.status(401).json({
+                success: false,
+                message: error.message || 'Invalid refresh token'
+            });
+        }
+    }
+
     async getProfile(req, res) {
         try {
-            const user = await AuthService.getUserById(req.user.id);
+            const result = await AuthService.getProfile(req.student.id);
             res.json({
-                message: 'Profile retrieved successfully',
-                user
+                success: true,
+                student: result
             });
         } catch (error) {
-            res.status(401).json({
-                message: error.message,
-                error: error instanceof Error ? error.message : 'Failed to retrieve profile'
+            console.error('Get profile error:', error);
+            res.status(404).json({
+                success: false,
+                message: error.message || 'Student not found'
             });
         }
     }
 
-    // Update user profile
     async updateProfile(req, res) {
         try {
-            const updates = req.body;
-            const user = await AuthService.updateUser(req.user.id, updates);
+            const { first_name, last_name, email } = req.body;
+            
+            // Validate email if provided
+            if (email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Invalid email format'
+                    });
+                }
+            }
+
+            const result = await AuthService.updateProfile(req.student.id, {
+                first_name,
+                last_name,
+                email: email || undefined // Only update email if provided
+            });
+
             res.json({
+                success: true,
                 message: 'Profile updated successfully',
-                user
+                student: {
+                    id: result.id,
+                    email: result.email,
+                    first_name: result.first_name,
+                    last_name: result.last_name,
+                    role: result.role
+                }
             });
         } catch (error) {
+            console.error('Update profile error:', error);
             res.status(400).json({
-                message: error.message,
-                error: error instanceof Error ? error.message : 'Failed to update profile'
+                success: false,
+                message: error.message || 'Failed to update profile'
             });
         }
     }

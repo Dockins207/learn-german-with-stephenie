@@ -11,7 +11,7 @@ const authMiddleware = async (req, res, next) => {
 
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-            req.user = decoded;
+            req.student = decoded;
             next();
         } catch (error) {
             return res.status(401).json({ message: 'Invalid or expired token' });
@@ -23,11 +23,11 @@ const authMiddleware = async (req, res, next) => {
 
 const roleMiddleware = (requiredRole) => {
     return (req, res, next) => {
-        if (!req.user || !req.user.role) {
+        if (!req.student || !req.student.role) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        if (req.user.role !== requiredRole) {
+        if (req.student.role !== requiredRole) {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
