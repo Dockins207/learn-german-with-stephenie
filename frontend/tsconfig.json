@@ -25,7 +25,9 @@
       "@context/*": ["./context/*"],
       "@services/*": ["./services/*"],
       "@constants/*": ["./constants/*"]
-    }
+    },
+    "jsxImportSource": "react",
+    "allowSyntheticDefaultImports": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules"]

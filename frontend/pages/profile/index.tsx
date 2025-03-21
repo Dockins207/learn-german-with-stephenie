@@ -2,68 +2,79 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/context/AuthContext';
 import Layout from '@/components/Layout';
-import { Button, Card, Form, Input, message, Spin, Typography } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
-
-const { Title, Text } = Typography;
-
-type ProfileFormData = {
-  first_name: string;
-  last_name: string;
-  email: string;
-};
+import { Card, Typography, CircularProgress, Button, TextField, Snackbar, Alert } from '@mui/material';
+import { API_URL } from '@/utils/auth';
 
 const ProfilePage = () => {
-  const [form] = Form.useForm<ProfileFormData>();
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [profileData, setProfileData] = useState<any | null>(null);
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const router = useRouter();
-  const { student, token, logout } = useAuth();
+  const { student, token } = useAuth();
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
 
   useEffect(() => {
-    if (!student) {
+    console.log('Student:', student);
+    console.log('Token:', token);
+    if (!student || !token) {
       router.push('/auth/login');
       return;
     }
 
     const fetchProfile = async () => {
       try {
-        const response = await fetch('/api/auth/me', {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
+
+        console.log('Profile fetch response:', response);
 
         if (!response.ok) {
           throw new Error('Failed to fetch profile');
         }
 
         const data = await response.json();
-        form.setFieldsValue({
-          first_name: data.student.first_name,
-          last_name: data.student.last_name,
-          email: data.student.email,
-        });
+        console.log('Profile data:', data);
+
+        if (data.student) {
+          setProfileData(data.student);
+          setFirstName(data.student.first_name);
+          setLastName(data.student.last_name);
+        } else {
+          throw new Error('Invalid profile data');
+        }
       } catch (error: any) {
-        message.error(error.message || 'Failed to fetch profile');
+        console.error('Profile fetch error:', error);
+        setSnackbarOpen(true);
+        setSnackbarMessage(error.message || 'Failed to fetch profile');
       } finally {
-        setInitialLoading(false);
+        setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [student, token, router, form]);
+  }, [student, token, router]);
 
-  const handleSubmit = async (values: ProfileFormData) => {
+  const handleSubmit = async (event: any) => {
+    event.preventDefault();
     try {
       setLoading(true);
-      const response = await fetch('/api/auth/profile', {
+      const response = await fetch(`${API_URL}/api/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ first_name: firstName, last_name: lastName }),
       });
 
       if (!response.ok) {
@@ -71,29 +82,47 @@ const ProfilePage = () => {
       }
 
       const data = await response.json();
-      message.success('Profile updated successfully');
-      form.setFieldsValue({
+      setSnackbarOpen(true);
+      setSnackbarMessage('Profile updated successfully');
+      setProfileData({
+        ...profileData!,
         first_name: data.student.first_name,
         last_name: data.student.last_name,
-        email: data.student.email,
       });
+      setShowUpdateForm(false);
     } catch (error: any) {
-      message.error(error.message || 'Failed to update profile');
+      setSnackbarOpen(true);
+      setSnackbarMessage(error.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    router.push('/auth/login');
-  };
-
-  if (initialLoading) {
+  if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-screen">
-          <Spin size="large" />
+          <CircularProgress />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!profileData) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <Typography variant="h6" color="error">Failed to load profile data</Typography>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => window.location.reload()}
+              className="mt-4"
+            >
+              Try Again
+            </Button>
+          </div>
         </div>
       </Layout>
     );
@@ -104,65 +133,87 @@ const ProfilePage = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
-            <Title level={2}>Student Profile</Title>
-            <Text type="secondary">Update your personal information</Text>
+            <Typography variant="h4">Student Profile</Typography>
+            <Typography variant="subtitle1" color="textSecondary">Your personal information</Typography>
           </div>
 
-          <Card className="shadow-sm">
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleSubmit}
-              className="space-y-4"
-            >
-              <Form.Item
-                name="first_name"
-                label="First Name"
-                rules={[{ required: true, message: 'Please enter your first name' }]}
-              >
-                <Input prefix={<UserOutlined />} />
-              </Form.Item>
+          <Card className="shadow-sm p-6">
+            <div className="space-y-6">
+              <div>
+                <Typography variant="h6" className="block mb-1">Full Name</Typography>
+                <Typography>{profileData.first_name} {profileData.last_name}</Typography>
+              </div>
 
-              <Form.Item
-                name="last_name"
-                label="Last Name"
-                rules={[{ required: true, message: 'Please enter your last name' }]}
-              >
-                <Input prefix={<UserOutlined />} />
-              </Form.Item>
+              <div>
+                <Typography variant="h6" className="block mb-1">Email</Typography>
+                <Typography>{profileData.email}</Typography>
+              </div>
 
-              <Form.Item
-                name="email"
-                label="Email"
-                rules={[{ required: true, message: 'Please enter your email' }]}
-              >
-                <Input disabled prefix={<UserOutlined />} />
-              </Form.Item>
+              <div>
+                <Typography variant="h6" className="block mb-1">Role</Typography>
+                <Typography>{profileData.role}</Typography>
+              </div>
 
-              <Form.Item>
+              <div className="flex justify-between items-center">
                 <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  block
+                  variant="text"
+                  color="primary"
+                  onClick={() => setShowUpdateForm(!showUpdateForm)}
+                  className="text-blue-600 hover:text-blue-800"
                 >
-                  Update Profile
+                  {showUpdateForm ? 'Cancel Update' : 'Update Profile'}
                 </Button>
-              </Form.Item>
-            </Form>
 
-            <div className="mt-4 text-center">
-              <Button
-                type="link"
-                onClick={handleLogout}
-                danger
-              >
-                Logout
-              </Button>
+                <Button
+                  variant="text"
+                  color="error"
+                  onClick={() => router.push('/auth/login')}
+                >
+                  Logout
+                </Button>
+              </div>
+
+              {showUpdateForm && (
+                <div className="mt-6">
+                  <form onSubmit={handleSubmit}>
+                    <div className="space-y-4">
+                      <TextField
+                        label="First Name"
+                        value={firstName}
+                        onChange={(event) => setFirstName(event.target.value)}
+                      />
+
+                      <TextField
+                        label="Last Name"
+                        value={lastName}
+                        onChange={(event) => setLastName(event.target.value)}
+                      />
+
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        color="primary"
+                        disabled={loading}
+                      >
+                        {loading ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           </Card>
         </div>
       </div>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert severity={snackbarMessage === 'Profile updated successfully' ? 'success' : 'error'} variant="filled">
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Layout>
   );
 };

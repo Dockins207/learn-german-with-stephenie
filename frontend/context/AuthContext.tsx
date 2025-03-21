@@ -22,9 +22,29 @@ interface AuthContextType {
   }) => Promise<any>;
   logout: () => void;
   refreshTokenHandler: () => Promise<void>;
+  getServerAuth: () => { student: Student | null; token: string | null };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function getServerAuth() {
+  const token = typeof window === 'undefined' ? null : localStorage.getItem('token');
+  let student = null;
+
+  if (token) {
+    try {
+      const decoded = JSON.parse(atob(token.split('.')[1]));
+      student = decoded;
+    } catch (error) {
+      console.error('Failed to decode token');
+    }
+  }
+
+  return {
+    student,
+    token
+  };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -103,24 +123,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token,
       login,
       register: async (studentData) => {
-        // Implement registration logic here
-        throw new Error('Not implemented');
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              first_name: studentData.firstName,
+              last_name: studentData.lastName,
+              email: studentData.email,
+              password: studentData.password
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Registration failed');
+          }
+
+          const data = await response.json();
+          login(data.token, data.student);
+          return data;
+        } catch (error) {
+          throw error;
+        }
       },
       logout,
       refreshTokenHandler: async () => {
-        // Implement token refresh logic here
-        throw new Error('Not implemented');
-      }
+        if (!token) return;
+
+        try {
+          const response = await fetch('/api/auth/refresh-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to refresh token');
+          }
+
+          const data = await response.json();
+          setToken(data.token);
+          localStorage.setItem('token', data.token);
+        } catch (error) {
+          console.error('Token refresh failed:', error);
+          logout();
+        }
+      },
+      getServerAuth,
     }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};

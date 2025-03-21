@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useState, useEffect } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export const signIn = async (credentials: { email: string; password: string }) => {
   try {
@@ -20,7 +20,6 @@ export const signUp = async (studentData: {
   password: string;
 }) => {
   try {
-    // Transform frontend field names to match backend expectations
     const transformedData = {
       first_name: studentData.firstName,
       last_name: studentData.lastName,
@@ -41,6 +40,32 @@ export const signOut = async () => {
     await axios.post(`${API_URL}/api/auth/logout`);
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Logout failed');
+  }
+};
+
+export const getProfile = async (token: string) => {
+  try {
+    const response = await axios.get(`${API_URL}/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch profile');
+  }
+};
+
+export const updateProfile = async (token: string, updates: any) => {
+  try {
+    const response = await axios.put(`${API_URL}/api/auth/profile`, updates, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update profile');
   }
 };
 
@@ -105,7 +130,6 @@ export const useAuth = () => {
     setStudent(null);
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
-    // Clear any other session data if needed
   };
 
   const refreshTokenHandler = async () => {
