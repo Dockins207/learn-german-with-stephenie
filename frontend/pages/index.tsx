@@ -12,7 +12,7 @@ import { useAuth } from '@context/AuthContext';
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, student } = useAuth();
 
   // Redirect to dashboard if user is authenticated
   useEffect(() => {
@@ -26,7 +26,9 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-4 py-16">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-6">
-            Welcome to German Learning Platform
+            Welcome back, {student && student.first_name ? 
+              (student.first_name.charAt(0).toUpperCase() + student.first_name.slice(1)) 
+              : 'Student'}
           </h1>
           <p className="text-xl text-gray-600 mb-8">
             Start your German learning journey with interactive classes, assignments, and recordings.

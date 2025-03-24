@@ -24,7 +24,8 @@
       "@hooks/*": ["./hooks/*"],
       "@context/*": ["./context/*"],
       "@services/*": ["./services/*"],
-      "@constants/*": ["./constants/*"]
+      "@constants/*": ["./constants/*"],
+      "@middleware/*": ["./middleware/*"]
     },
     "jsxImportSource": "react",
     "allowSyntheticDefaultImports": true

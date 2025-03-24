@@ -57,31 +57,17 @@ const Sidebar = ({ isOpen }: SidebarProps) => {
               <BookOpenIcon className="w-5 h-5 flex-shrink-0" />
               {isOpen && <span className="block">Learning Materials</span>}
             </Link>
-            <Link href="/profile" className="block px-4 py-3 flex items-center space-x-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors">
-              <UserCircleIcon className="w-5 h-5 flex-shrink-0" />
-              {isOpen && <span className="block">Student Profile</span>}
-            </Link>
             <Link href="/peers" className="block px-4 py-3 flex items-center space-x-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors">
               <UserGroupIcon className="w-5 h-5 flex-shrink-0" />
               {isOpen && <span className="block">Peers</span>}
             </Link>
+            <Link href="/profile" className="block px-4 py-3 flex items-center space-x-3 text-gray-600 hover:text-blue-600 hover:bg-gray-50 transition-colors">
+              <UserCircleIcon className="w-5 h-5 flex-shrink-0" />
+              {isOpen && <span className="block">Profile</span>}
+            </Link>
           </nav>
         </div>
         
-        {/* Profile section at the bottom */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-              <span className="text-gray-400 text-sm">P</span>
-            </div>
-            {isOpen && (
-              <Link href="/profile" className="text-gray-600 hover:text-blue-600 block">
-                Profile
-              </Link>
-            )}
-          </div>
-        </div>
-
         {/* Logout button below profile */}
         <div className="border-t border-gray-200 px-4 py-3">
           <button

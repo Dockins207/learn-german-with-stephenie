@@ -29,10 +29,9 @@ app.use((req, res, next) => {
 // Connect to database and sync models
 connectDB()
   .then(() => {
-    // Initialize models
+    // Initialize only the student model
     const Student = require('@models/student.model')(sequelize);
-    const Classroom = require('@models/classroom.model')(sequelize);
-    const Attendance = require('@models/attendance.model')(sequelize);
+    // Removed classroom and attendance models
 
     // Sync models with database
     return sequelize.sync();
@@ -40,10 +39,9 @@ connectDB()
   .then(() => {
     console.log('Models synchronized with database');
     
-    // Routes
+    // Routes - only keep auth routes
     app.use('/api/auth', require('./routes/auth.routes'));
-    app.use('/api/classrooms', require('./routes/classroom.routes'));
-    app.use('/api/attendance', require('./routes/attendance.routes'));
+    // Removed classroom and attendance routes
 
     // Error handling middleware
     app.use((err, req, res, next) => {
