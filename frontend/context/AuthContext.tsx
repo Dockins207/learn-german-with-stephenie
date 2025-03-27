@@ -7,6 +7,7 @@ interface Student {
   first_name: string;
   last_name: string;
   role: string;
+  profile_picture?: string;
 }
 
 interface AuthContextType {
@@ -72,6 +73,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const handleTokenRefresh = async () => {
       if (!token) return;
 
+      // Decode token to check expiry (assuming exp is provided and in seconds)
+      let decoded;
+      try {
+        decoded = JSON.parse(atob(token.split('.')[1]));
+      } catch (error) {
+        console.error('Failed to decode token before refresh:', error);
+        logout();
+        return;
+      }
+
+      const expirationTime = decoded.exp ? decoded.exp * 1000 : 0;
+      const now = Date.now();
+      // Only refresh if token is within 1 minute of expiring or already expired
+      if (expirationTime - now > 60 * 1000) {
+        return;
+      }
+
       try {
         const response = await fetch('/api/auth/refresh-token', {
           method: 'POST',
@@ -96,7 +114,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Check token validity every 5 minutes
     const interval = setInterval(handleTokenRefresh, 5 * 60 * 1000);
-
     return () => clearInterval(interval);
   }, [token]);
 
